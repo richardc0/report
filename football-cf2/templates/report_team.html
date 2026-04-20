@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{{ club }} Report — ScoutIQ{% endblock %}
+{% block nav_team %}active{% endblock %}
+
+{% block content %}
+<div class="report-header">
+  <div class="report-header-inner">
+    <div class="report-breadcrumb">
+      <a href="?">Reports</a><span>›</span>
+      <a href="?page=team">Team</a><span>›</span>
+      <span>{{ club }}</span>
+    </div>
+    <div class="report-title-row">
+      <div>
+        <p class="report-type-label">TEAM INTELLIGENCE REPORT</p>
+        <h1 class="report-club-name">{{ club }}</h1>
+        <p class="report-meta">EFL League One · Generated <span id="gen-time"></span></p>
+      </div>
+      <div class="report-actions">
+        <button class="btn-secondary" onclick="window.print()">🖨 Print</button>
+        <a href="?" class="btn-secondary">↩ New Report</a>
+      </div>
+    </div>
+    <div class="section-pills">
+      {% for section in sections %}
+      <a href="#{{ section.id }}" class="pill" data-section="{{ section.id }}">{{ section.icon }} {{ section.title }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="report-body">
+  <div class="report-body-inner">
+    {% for section in sections %}
+    <section class="report-section" id="{{ section.id }}" data-section="{{ section.id }}" data-club="{{ club }}">
+      <div class="section-header">
+        <span class="section-icon">{{ section.icon }}</span>
+        <h2 class="section-title">{{ section.title }}</h2>
+        <button class="section-refresh" data-section="{{ section.id }}" title="Refresh">↻</button>
+      </div>
+      <div class="section-body" id="body-{{ section.id }}">
+        <div class="section-loading"><div class="loading-spinner"></div><span>Searching live data…</span></div>
+      </div>
+      <div class="section-sources" id="sources-{{ section.id }}" style="display:none"></div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CLUB     = {{ club | tojson }};
+const SECTIONS = {{ sections | tojson }};
+
+const $ = id => document.getElementById(id);
+
+function fmt(d) {
+  try { return new Date(d).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}); } catch { return d||'—'; }
+}
+function esc(s) {
+  return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function empty(msg) {
+  return `<div class="empty-state"><div style="font-size:2rem;margin-bottom:.5rem">📋</div><p>${esc(msg)}</p></div>`;
+}
+
+const RENDERERS = {
+  recent_results(data) {
+    if (!Array.isArray(data)||!data.length) return empty('No results found');
+    const rows = data.map((m,i)=>{
+      const cls={Win:'result-win',Draw:'result-draw',Loss:'result-loss'}[m.result]||'';
+      return `<tr>
+        <td style="color:var(--ink-muted);font-family:var(--font-mono);font-size:.75rem">${i+1}</td>
+        <td style="font-family:var(--font-mono);font-size:.78rem;white-space:nowrap">${fmt(m.date)}</td>
+        <td style="font-size:.78rem;color:var(--ink-muted)">${esc(m.competition||'')}</td>
+        <td style="font-weight:600">${esc(m.opponent||'')}</td>
+        <td class="score-cell">${esc(m.score||'')}</td>
+        <td style="font-size:.7rem;font-family:var(--font-mono);color:var(--ink-muted)">${esc(m.venue||'')}</td>
+        <td><span class="result-badge ${cls}">${esc(m.result||'')}</span></td>
+      </tr>`;
+    }).join('');
+    return `<table class="results-table"><thead><tr><th>#</th><th>DATE</th><th>COMPETITION</th><th>OPPONENT</th><th>SCORE</th><th>VENUE</th><th>RESULT</th></tr></thead><tbody>${rows}</tbody></table>`;
+  },
+  injuries(data) {
+    if (!Array.isArray(data)||!data.length) return empty('✅ No injuries currently reported');
+    return `<div class="player-list">${data.map(p=>{
+      const sc={Out:'status-out',Doubtful:'status-doubtful',Returning:'status-returning'}[p.status]||'status-doubtful';
+      return `<div class="player-card"><div class="player-name">${esc(p.player_name||'Unknown')}</div><div class="player-detail">${esc(p.injury_type||'')}</div><div class="player-detail">Return: ${esc(p.expected_return||'Unknown')}</div><span class="status-badge ${sc}">${esc(p.status||'')}</span></div>`;
+    }).join('')}</div>`;
+  },
+  suspensions(data) {
+    if (!Array.isArray(data)||!data.length) return empty('✅ No current suspensions');
+    return `<div class="player-list">${data.map(p=>`<div class="player-card"><div class="player-name">${esc(p.player_name||'Unknown')}</div><div class="player-detail">${esc(p.reason||'')}</div>${p.matches_remaining!=null?`<div class="player-detail">Matches remaining: <strong>${esc(p.matches_remaining)}</strong></div>`:''}<span class="status-badge status-out">SUSPENDED</span></div>`).join('')}</div>`;
+  },
+  style_of_play(data) {
+    if (!data||typeof data!=='object') return empty('No tactical data available');
+    const pl={High:'🔴 High',Medium:'🟡 Medium',Low:'🟢 Low'}[data.press_intensity]||data.press_intensity||'—';
+    const str=(data.key_strengths||[]).map(s=>`<span class="tag tag-strength">✓ ${esc(s)}</span>`).join('');
+    const wk=(data.key_weaknesses||[]).map(w=>`<span class="tag tag-weakness">✗ ${esc(w)}</span>`).join('');
+    return `<div class="style-grid">
+      <div class="style-stat"><div class="style-stat-label">FORMATION</div><div class="style-stat-value">${esc(data.formation||'—')}</div></div>
+      <div class="style-stat"><div class="style-stat-label">PRESS INTENSITY</div><div class="style-stat-value" style="font-size:1rem">${esc(pl)}</div></div>
+      <div class="style-stat"><div class="style-stat-label">ATTACKING STYLE</div><div style="font-size:.9rem;margin-top:.25rem">${esc(data.attacking_style||'—')}</div></div>
+      <div class="style-stat"><div class="style-stat-label">DEFENSIVE SHAPE</div><div style="font-size:.9rem;margin-top:.25rem">${esc(data.defensive_shape||'—')}</div></div>
+      <div><div class="style-stat-label" style="margin-bottom:.5rem">KEY STRENGTHS</div><div class="tag-list">${str||'<span style="color:var(--ink-muted);font-size:.85rem">None listed</span>'}</div></div>
+      <div><div class="style-stat-label" style="margin-bottom:.5rem">KEY WEAKNESSES</div><div class="tag-list">${wk||'<span style="color:var(--ink-muted);font-size:.85rem">None listed</span>'}</div></div>
+      ${data.summary?`<div class="style-summary">${esc(data.summary)}</div>`:''}
+    </div>`;
+  },
+  top_scorers(data) {
+    if (!Array.isArray(data)||!data.length) return empty('No scorer data available');
+    const max=Math.max(...data.map(p=>p.goals||0),1);
+    const rows=data.map((p,i)=>`<tr>
+      <td class="scorer-rank ${i===0?'rank-1':''}">${i===0?'🥇':i+1}</td>
+      <td style="font-weight:600">${esc(p.player_name||'')}</td>
+      <td><div class="goals-bar-wrap"><div class="goals-bar" style="width:${Math.round(((p.goals||0)/max)*120)}px"></div><span class="goals-num">${p.goals??'—'}</span></div></td>
+      <td style="font-family:var(--font-mono);font-size:.82rem">${p.assists??'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:.82rem;color:var(--ink-muted)">${p.appearances??'—'}</td>
+    </tr>`).join('');
+    return `<table class="scorers-table"><thead><tr><th>#</th><th>PLAYER</th><th>GOALS</th><th>ASSISTS</th><th>APPS</th></tr></thead><tbody>${rows}</tbody></table>`;
+  },
+  next_fixture(data) {
+    if (!data||typeof data!=='object') return empty('No upcoming fixture found');
+    const isHome=(data.venue||'').toLowerCase()==='home';
+    return `<div>
+      <div class="fixture-card">
+        <div class="fixture-team" style="text-align:${isHome?'right':'left'}"><div class="fixture-team-tag">${isHome?'HOME':'AWAY'}</div><div class="fixture-team-name">${esc(CLUB)}</div></div>
+        <div class="fixture-vs">VS</div>
+        <div class="fixture-team" style="text-align:${isHome?'left':'right'}"><div class="fixture-team-tag">${isHome?'AWAY':'HOME'}</div><div class="fixture-team-name">${esc(data.opponent||'TBC')}</div></div>
+      </div>
+      <div class="fixture-meta" style="padding-top:.75rem">
+        <div class="fixture-meta-item"><span class="fixture-meta-label">DATE</span><span>${fmt(data.date)}${data.time&&data.time!=='TBC'?' · '+esc(data.time):''}</span></div>
+        <div class="fixture-meta-item"><span class="fixture-meta-label">COMPETITION</span><span>${esc(data.competition||'—')}</span></div>
+        <div class="fixture-meta-item"><span class="fixture-meta-label">STADIUM</span><span>${esc(data.stadium||'—')}</span></div>
+      </div>
+    </div>`;
+  },
+};
+
+async function loadSection(sectionId) {
+  const bodyEl   = $(`body-${sectionId}`);
+  const sourcesEl= $(`sources-${sectionId}`);
+  const pill     = document.querySelector(`.pill[data-section="${sectionId}"]`);
+  if (!bodyEl) return;
+
+  bodyEl.innerHTML = `<div class="section-loading"><div class="loading-spinner"></div><span>Searching live data…</span></div>`;
+  if (pill) { pill.classList.remove('done'); pill.classList.add('loading-pill'); }
+  sourcesEl.style.display = 'none';
+
+  try {
+    // Use current URL base with query params — works for both Cloud Functions and local
+    const base = window.location.href.split('?')[0];
+    const url  = `${base}?page=api&club=${encodeURIComponent(CLUB)}&section=${encodeURIComponent(sectionId)}`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    if (!res.ok || json.error) throw new Error(json.error || `HTTP ${res.status}`);
+
+    const renderer = RENDERERS[sectionId];
+    bodyEl.innerHTML = renderer ? renderer(json.data) : `<pre style="font-size:.8rem;overflow:auto">${esc(JSON.stringify(json.data,null,2))}</pre>`;
+
+    if (json.sources && json.sources.length) {
+      sourcesEl.style.display = '';
+      sourcesEl.innerHTML = json.sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title||s.url)}</a>`).join('');
+    }
+    if (pill) { pill.classList.remove('loading-pill'); pill.classList.add('done'); }
+  } catch(err) {
+    bodyEl.innerHTML = `<div class="section-error">⚠ Failed to load: ${esc(err.message)}</div>`;
+    if (pill) pill.classList.remove('loading-pill');
+  }
+}
+
+document.querySelectorAll('.section-refresh').forEach(btn => {
+  btn.addEventListener('click', () => loadSection(btn.dataset.section));
+});
+
+SECTIONS.forEach((s, i) => setTimeout(() => loadSection(s.id), i * 300));
+</script>
+{% endblock %}

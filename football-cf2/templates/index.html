@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}ScoutIQ — Football Reports{% endblock %}
+{% block nav_team %}active{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">EFL LEAGUE ONE</p>
+    <h1 class="hero-title">Football<br/><em>Reports</em></h1>
+    <p class="hero-sub">AI-powered reports grounded in live data. Select a report type and club to begin.</p>
+  </div>
+</section>
+
+<section class="selector-section">
+  <div class="selector-grid">
+
+    <div class="report-card active">
+      <div class="report-card-header">
+        <span class="report-card-icon">👥</span>
+        <span class="report-card-badge">AVAILABLE</span>
+      </div>
+      <h2 class="report-card-title">Team Report</h2>
+      <p class="report-card-desc">Results, injuries, suspensions, style of play, top scorers and upcoming fixtures — all sourced live.</p>
+      {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+      <form class="team-form" action="" method="GET">
+        <input type="hidden" name="page" value="report" />
+        <div class="select-wrap">
+          <select name="club" class="team-select" required>
+            <option value="" disabled selected>Select a team…</option>
+            {% for team in teams %}
+            <option value="{{ team }}">{{ team }}</option>
+            {% endfor %}
+          </select>
+          <span class="select-arrow">▾</span>
+        </div>
+        <button type="submit" class="btn-primary">Generate Report →</button>
+      </form>
+    </div>
+
+    <div class="report-card coming-soon">
+      <div class="report-card-header"><span class="report-card-icon">🟨</span><span class="report-card-badge soon">COMING SOON</span></div>
+      <h2 class="report-card-title">Referee Report</h2>
+      <p class="report-card-desc">Card tendencies, foul frequency, home/away bias and historical match data for any official.</p>
+    </div>
+
+    <div class="report-card coming-soon">
+      <div class="report-card-header"><span class="report-card-icon">🏟️</span><span class="report-card-badge soon">COMING SOON</span></div>
+      <h2 class="report-card-title">Stadium Report</h2>
+      <p class="report-card-desc">Pitch dimensions, surface type, home advantage stats, travel distances and atmosphere ratings.</p>
+    </div>
+
+    <div class="report-card coming-soon">
+      <div class="report-card-header"><span class="report-card-icon">⚔️</span><span class="report-card-badge soon">COMING SOON</span></div>
+      <h2 class="report-card-title">Head to Head</h2>
+      <p class="report-card-desc">Historical matchup records, goal patterns, venue breakdowns and recent form comparisons.</p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

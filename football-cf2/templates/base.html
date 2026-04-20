@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Reports{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0d0d0d; --ink-soft: #3a3a3a; --ink-muted: #777;
+      --paper: #f5f0e8; --paper-dark: #ede8dc; --paper-deep: #e0d9cc;
+      --accent: #c8102e; --accent-alt: #0057a8; --gold: #c9a84c;
+      --white: #ffffff; --success: #1a7a3f; --warn: #c07a00; --danger: #c8102e;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --radius: 4px; --shadow: 0 2px 12px rgba(0,0,0,0.08); --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; font-size: 15px; line-height: 1.6; }
+    .site-header { background: var(--ink); color: var(--white); border-bottom: 3px solid var(--accent); position: sticky; top: 0; z-index: 100; }
+    .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 2rem; display: flex; align-items: center; gap: 3rem; height: 60px; }
+    .logo { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; color: inherit; flex-shrink: 0; }
+    .logo-mark { font-size: 1.3rem; }
+    .logo-text { font-family: var(--font-display); font-size: 1.25rem; font-weight: 900; letter-spacing: 0.05em; color: var(--white); }
+    .logo-text em { font-style: normal; color: var(--accent); }
+    .report-nav { display: flex; align-items: center; gap: 0.25rem; flex: 1; }
+    .nav-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.15em; color: var(--ink-muted); margin-right: 0.5rem; }
+    .nav-item { display: flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.85rem; border-radius: var(--radius); text-decoration: none; color: rgba(255,255,255,0.65); font-size: 0.85rem; font-weight: 500; transition: all 0.15s ease; }
+    .nav-item:hover { color: var(--white); background: rgba(255,255,255,0.08); }
+    .nav-item.active { color: var(--white); background: var(--accent); }
+    .site-footer { background: var(--ink); color: rgba(255,255,255,0.4); font-size: 0.75rem; font-family: var(--font-mono); margin-top: auto; }
+    .footer-inner { max-width: 1280px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; }
+    .hero { position: relative; background: var(--ink); color: var(--white); padding: 5rem 2rem 4rem; overflow: hidden; }
+    .hero-bg { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px), repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(255,255,255,0.02) 40px, rgba(255,255,255,0.02) 41px); background-color: var(--ink); }
+    .hero-bg::after { content: ''; position: absolute; bottom: -60px; right: -60px; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(200,16,46,0.15) 0%, transparent 70%); }
+    .hero-content { position: relative; max-width: 1280px; margin: 0 auto; }
+    .hero-eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1rem; }
+    .hero-title { font-family: var(--font-display); font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 1; margin-bottom: 1.25rem; }
+    .hero-title em { font-style: italic; color: var(--accent); }
+    .hero-sub { color: rgba(255,255,255,0.6); font-size: 1.05rem; max-width: 480px; line-height: 1.7; }
+    .selector-section { padding: 3rem 2rem; max-width: 1280px; margin: 0 auto; width: 100%; }
+    .selector-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .report-card { background: var(--white); border: 1px solid var(--paper-deep); border-radius: var(--radius); padding: 1.75rem; text-decoration: none; color: var(--ink); display: flex; flex-direction: column; gap: 0.75rem; transition: all 0.2s ease; box-shadow: var(--shadow); }
+    .report-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .report-card.coming-soon { opacity: 0.65; cursor: not-allowed; pointer-events: none; }
+    .report-card.active { border-top: 3px solid var(--accent); }
+    .report-card-header { display: flex; align-items: center; justify-content: space-between; }
+    .report-card-icon { font-size: 1.5rem; }
+    .report-card-badge { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em; font-weight: 500; padding: 0.2rem 0.5rem; border-radius: 2px; background: var(--accent); color: var(--white); }
+    .report-card-badge.soon { background: var(--paper-deep); color: var(--ink-muted); }
+    .report-card-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: 700; }
+    .report-card-desc { font-size: 0.875rem; color: var(--ink-soft); line-height: 1.6; flex: 1; }
+    .team-form { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+    .select-wrap { position: relative; }
+    .team-select { width: 100%; padding: 0.65rem 2rem 0.65rem 0.85rem; border: 1.5px solid var(--paper-deep); border-radius: var(--radius); background: var(--paper); font-family: var(--font-body); font-size: 0.9rem; color: var(--ink); appearance: none; cursor: pointer; transition: border-color 0.15s; }
+    .team-select:focus { outline: none; border-color: var(--accent); }
+    .select-arrow { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--ink-muted); }
+    .btn-primary { display: inline-block; padding: 0.7rem 1.25rem; background: var(--accent); color: var(--white); border: none; border-radius: var(--radius); font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; transition: background 0.15s, transform 0.1s; }
+    .btn-primary:hover { background: #a50d25; transform: translateY(-1px); }
+    .btn-secondary { display: inline-block; padding: 0.55rem 1rem; background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,0.25); border-radius: var(--radius); font-family: var(--font-body); font-size: 0.82rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+    .btn-secondary:hover { border-color: var(--white); background: rgba(255,255,255,0.08); }
+    .form-error { color: var(--danger); font-size: 0.82rem; font-weight: 500; }
+    .report-header { background: var(--ink); color: var(--white); border-bottom: 3px solid var(--accent); padding: 2rem 2rem 0; }
+    .report-header-inner { max-width: 1280px; margin: 0 auto; }
+    .report-breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: rgba(255,255,255,0.4); font-family: var(--font-mono); margin-bottom: 1.5rem; }
+    .report-breadcrumb a { color: rgba(255,255,255,0.4); text-decoration: none; }
+    .report-breadcrumb a:hover { color: var(--white); }
+    .report-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; margin-bottom: 2rem; }
+    .report-type-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 0.4rem; }
+    .report-club-name { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900; line-height: 1; }
+    .report-meta { margin-top: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.45); font-family: var(--font-mono); }
+    .report-actions { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; padding-top: 0.25rem; }
+    .section-pills { display: flex; gap: 0.25rem; overflow-x: auto; scrollbar-width: none; margin: 0 -2rem; padding: 0 2rem; }
+    .section-pills::-webkit-scrollbar { display: none; }
+    .pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.55rem 1rem; border-radius: var(--radius) var(--radius) 0 0; font-size: 0.78rem; font-weight: 500; text-decoration: none; color: rgba(255,255,255,0.5); white-space: nowrap; transition: all 0.15s; border-bottom: 2px solid transparent; flex-shrink: 0; }
+    .pill:hover { color: var(--white); border-bottom-color: rgba(255,255,255,0.3); }
+    .pill.done { color: rgba(255,255,255,0.85); border-bottom-color: var(--accent); }
+    .pill.loading-pill { color: var(--gold); }
+    .report-body { padding: 2.5rem 2rem; }
+    .report-body-inner { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem; }
+    .report-section { background: var(--white); border: 1px solid var(--paper-deep); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; animation: fadeUp 0.4s ease both; }
+    .section-header { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; background: var(--paper); border-bottom: 1px solid var(--paper-deep); }
+    .section-icon { font-size: 1.1rem; }
+    .section-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; flex: 1; }
+    .section-refresh { background: none; border: 1px solid var(--paper-deep); border-radius: var(--radius); padding: 0.25rem 0.6rem; font-size: 1rem; cursor: pointer; color: var(--ink-muted); transition: all 0.15s; line-height: 1; }
+    .section-refresh:hover { border-color: var(--accent); color: var(--accent); }
+    .section-body { padding: 1.5rem; min-height: 80px; }
+    .section-loading { display: flex; align-items: center; gap: 0.75rem; color: var(--ink-muted); font-size: 0.85rem; font-family: var(--font-mono); padding: 0.5rem 0; }
+    .loading-spinner { width: 18px; height: 18px; border: 2px solid var(--paper-deep); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .section-error { background: #fff5f5; border: 1px solid #fcc; border-radius: var(--radius); padding: 1rem; color: var(--danger); font-size: 0.85rem; }
+    .section-sources { padding: 0.65rem 1.5rem; background: var(--paper); border-top: 1px solid var(--paper-deep); font-size: 0.72rem; color: var(--ink-muted); font-family: var(--font-mono); display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+    .section-sources::before { content: 'SOURCES:'; letter-spacing: 0.1em; color: var(--ink-soft); font-weight: 500; }
+    .section-sources a { color: var(--accent-alt); text-decoration: none; }
+    .section-sources a:hover { text-decoration: underline; }
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .results-table th { text-align: left; font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; color: var(--ink-muted); padding: 0.4rem 0.75rem; border-bottom: 2px solid var(--paper-deep); white-space: nowrap; }
+    .results-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--paper-dark); vertical-align: middle; }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table tr:hover td { background: var(--paper); }
+    .result-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 2px; font-size: 0.7rem; font-weight: 600; font-family: var(--font-mono); letter-spacing: 0.05em; }
+    .result-win { background: #e6f4ec; color: var(--success); }
+    .result-draw { background: #fff8e6; color: var(--warn); }
+    .result-loss { background: #fce8ea; color: var(--danger); }
+    .score-cell { font-family: var(--font-display); font-weight: 700; font-size: 1rem; }
+    .player-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
+    .player-card { border: 1px solid var(--paper-deep); border-radius: var(--radius); padding: 0.85rem 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
+    .player-name { font-weight: 600; font-size: 0.9rem; }
+    .player-detail { font-size: 0.78rem; color: var(--ink-muted); font-family: var(--font-mono); }
+    .status-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 2px; font-size: 0.65rem; font-weight: 600; font-family: var(--font-mono); margin-top: 0.25rem; align-self: flex-start; }
+    .status-out { background: #fce8ea; color: var(--danger); }
+    .status-doubtful { background: #fff8e6; color: var(--warn); }
+    .status-returning { background: #e6f4ec; color: var(--success); }
+    .empty-state { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 0.875rem; }
+    .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 640px) { .style-grid { grid-template-columns: 1fr; } }
+    .style-stat { display: flex; flex-direction: column; gap: 0.25rem; }
+    .style-stat-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; color: var(--ink-muted); }
+    .style-stat-value { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+    .tag { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; border: 1px solid; }
+    .tag-strength { background: #e6f4ec; border-color: #a8d5b5; color: var(--success); }
+    .tag-weakness { background: #fce8ea; border-color: #f5b8be; color: var(--danger); }
+    .style-summary { grid-column: 1 / -1; font-size: 0.9rem; color: var(--ink-soft); line-height: 1.7; padding-top: 0.75rem; border-top: 1px solid var(--paper-deep); }
+    .scorers-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .scorers-table th { text-align: left; font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em; color: var(--ink-muted); padding: 0.4rem 0.75rem; border-bottom: 2px solid var(--paper-deep); }
+    .scorers-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--paper-dark); }
+    .scorers-table tr:last-child td { border-bottom: none; }
+    .scorer-rank { font-family: var(--font-mono); color: var(--ink-muted); font-size: 0.75rem; width: 32px; }
+    .scorer-rank.rank-1 { color: var(--gold); font-weight: 700; }
+    .goals-bar-wrap { display: flex; align-items: center; gap: 0.75rem; }
+    .goals-bar { height: 6px; background: var(--accent); border-radius: 3px; min-width: 4px; }
+    .goals-num { font-weight: 700; font-family: var(--font-display); font-size: 1rem; }
+    .fixture-card { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: center; padding: 1.5rem; background: var(--paper); border-radius: var(--radius); border: 1px solid var(--paper-deep); }
+    .fixture-team { display: flex; flex-direction: column; gap: 0.25rem; }
+    .fixture-team-name { font-family: var(--font-display); font-size: 1.3rem; font-weight: 700; }
+    .fixture-team-tag { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--ink-muted); }
+    .fixture-vs { font-family: var(--font-display); font-size: 2rem; font-weight: 900; color: var(--paper-deep); text-align: center; }
+    .fixture-meta { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .fixture-meta-item { display: flex; gap: 0.75rem; align-items: center; font-size: 0.85rem; }
+    .fixture-meta-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.1em; color: var(--ink-muted); width: 90px; flex-shrink: 0; }
+    .coming-soon-page { display: flex; align-items: center; justify-content: center; min-height: 70vh; padding: 4rem 2rem; }
+    .coming-soon-inner { text-align: center; max-width: 480px; }
+    .coming-soon-eyebrow { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 1rem; }
+    .coming-soon-title { font-family: var(--font-display); font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 900; line-height: 1.1; margin-bottom: 1.25rem; }
+    .coming-soon-title em { font-style: italic; color: var(--accent); }
+    .coming-soon-sub { color: var(--ink-soft); line-height: 1.7; margin-bottom: 2rem; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media print {
+      .site-header, .site-footer, .report-actions, .section-pills, .section-refresh, .btn-primary, .btn-secondary { display: none !important; }
+      .report-header { position: static; }
+      body { background: white; }
+      .report-section { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    }
+    @media (max-width: 768px) {
+      .header-inner { padding: 0 1rem; gap: 1rem; }
+      .nav-label { display: none; }
+      .report-title-row { flex-direction: column; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="?" class="logo">
+        <span class="logo-mark">⚽</span>
+        <span class="logo-text">Reports</span>
+      </a>
+      <nav class="report-nav">
+        <span class="nav-label">REPORTS</span>
+        <a href="?page=team" class="nav-item {% block nav_team %}{% endblock %}">👥 Team</a>
+        <a href="?page=referee" class="nav-item {% block nav_ref %}{% endblock %}">🟨 Referee</a>
+        <a href="?page=stadium" class="nav-item {% block nav_stad %}{% endblock %}">🏟️ Stadium</a>
+        <a href="?page=h2h" class="nav-item {% block nav_h2h %}{% endblock %}">⚔️ Head to Head</a>
+      </nav>
+    </div>
+  </header>
+
+  <main style="flex:1">{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>ScoutIQ — Powered by Gemini + Google Search Grounding</span>
+      <span>EFL League One Reports
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    const timeEl = document.getElementById('gen-time');
+    if (timeEl) timeEl.textContent = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
