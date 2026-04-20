@@ -1,0 +1,1 @@
+gcloud functions deploy scoutiq   --gen2   --region=europe-west2   --runtime=python312   --source=.   --entry-point=scoutiq   --trigger-http   --allow-unauthenticated   --timeout=120s   --set-env-vars="GOOGLE_CLOUD_PROJECT=<PROJECT ID>,GOOGLE_CLOUD_LOCATION=global"
